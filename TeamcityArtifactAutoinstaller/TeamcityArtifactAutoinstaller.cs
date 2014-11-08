@@ -19,6 +19,30 @@ namespace TeamcityArtifactAutoinstaller
 
         protected override void OnStart(string[] args)
         {
+            ScheduleTask();
+        }
+
+        private static void ScheduleTask()
+        {
+            RunTask();
+            Task.Delay(TimeSpan.FromMinutes(1))
+            .ContinueWith(_ =>
+            {
+                ScheduleTask();
+            });
+
+        }
+
+        private static void RunTask()
+        {
+            try
+            {
+                InstallProcess.CheckAndInstall();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception happened: " + ex.ToString());
+            }
         }
 
         protected override void OnStop()
