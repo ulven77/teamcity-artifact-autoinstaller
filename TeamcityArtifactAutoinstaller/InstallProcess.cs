@@ -19,6 +19,7 @@ namespace TeamcityArtifactAutoinstaller
             foreach (var project in Properties.Settings.Default.TeamcityProjects)
             {
                 WebClient wc = new WebClient();
+                wc.Credentials = new NetworkCredential(project.TeamCityUserName, project.TeamCityPassword);
                 var versionUrl = string.Format("{0}/httpAuth/app/rest/buildTypes/id:{1}/builds/status:SUCCESS/number", project.TeamCityBaseUrl, project.TeamCityProjectId);
                 var versionString = wc.DownloadString(versionUrl);
                 if (lastCheckedVersion.ContainsKey(project.TeamCityProjectId))
@@ -41,12 +42,13 @@ namespace TeamcityArtifactAutoinstaller
                 // Download artifact
                 var artifactUrl = string.Format("{0}/repository/downloadAll/{1}/{2}", project.TeamCityBaseUrl, project.TeamCityProjectId, versionString);
                 var zipFileName = string.Format("{0}_{1}.zip", project.TeamCityProjectId, versionString);
-                var unzipDir = string.Format("{0}_{1}", project.TeamCityProjectId);
+                var unzipDir = string.Format("{0}_{1}", project.TeamCityProjectId, versionString);
                 var zipPath = Path.Combine(project.InstallPath, zipFileName);
                 var unzipDirPath = Path.Combine(project.InstallPath, unzipDir);
                 wc.DownloadFile(artifactUrl, zipPath);
 
-                ZipFile.ExtractToDirectory(zipFileName, unzipDirPath);
+                ZipFile.ExtractToDirectory(zipPath, unzipDirPath);
+                File.Delete(zipPath);
 
                 // Store current version
                 lastCheckedVersion[project.TeamCityProjectId] = versionString;

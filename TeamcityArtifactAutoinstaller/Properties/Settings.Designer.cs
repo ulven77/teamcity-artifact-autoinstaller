@@ -41,12 +41,16 @@ namespace TeamcityArtifactAutoinstaller.Properties {
           <ArrayOfTeamcityProjectConfiguration xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
             <TeamcityProjectConfiguration>
               <TeamCityBaseUrl>https://myteamcirtyserver.com</TeamCityBaseUrl>
+              <TeamCityUserName>username1</TeamCityUserName>
+              <TeamCityPassword>password1</TeamCityPassword>
               <TeamCityProjectId>project1</TeamCityProjectId>
               <InstallPath>c:\installfiles</InstallPath>
               <InstallCommand>install1.bat</InstallCommand>
             </TeamcityProjectConfiguration>
             <TeamcityProjectConfiguration>
               <TeamCityBaseUrl>https://myteamcirtyserver.com</TeamCityBaseUrl>
+              <TeamCityUserName>username2</TeamCityUserName>
+              <TeamCityPassword>password2</TeamCityPassword>
               <TeamCityProjectId>project2</TeamCityProjectId>
               <InstallPath>c:\installfiles</InstallPath>
               <InstallCommand>install2.bat</InstallCommand>

@@ -10,6 +10,10 @@ namespace TeamcityArtifactAutoinstaller
     {
         public string TeamCityBaseUrl { get; set; }
 
+        public string TeamCityUserName { get; set; }
+        
+        public string TeamCityPassword { get; set; }
+
         public string TeamCityProjectId { get; set; }
 
         public string InstallPath { get; set; }

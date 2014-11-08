@@ -14,12 +14,16 @@
           &lt;ArrayOfTeamcityProjectConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
             &lt;TeamcityProjectConfiguration&gt;
               &lt;TeamCityBaseUrl&gt;https://myteamcirtyserver.com&lt;/TeamCityBaseUrl&gt;
+              &lt;TeamCityUserName&gt;username1&lt;/TeamCityUserName&gt;
+              &lt;TeamCityPassword&gt;password1&lt;/TeamCityPassword&gt;
               &lt;TeamCityProjectId&gt;project1&lt;/TeamCityProjectId&gt;
               &lt;InstallPath&gt;c:\installfiles&lt;/InstallPath&gt;
               &lt;InstallCommand&gt;install1.bat&lt;/InstallCommand&gt;
             &lt;/TeamcityProjectConfiguration&gt;
             &lt;TeamcityProjectConfiguration&gt;
               &lt;TeamCityBaseUrl&gt;https://myteamcirtyserver.com&lt;/TeamCityBaseUrl&gt;
+              &lt;TeamCityUserName&gt;username2&lt;/TeamCityUserName&gt;
+              &lt;TeamCityPassword&gt;password2&lt;/TeamCityPassword&gt;
               &lt;TeamCityProjectId&gt;project2&lt;/TeamCityProjectId&gt;
               &lt;InstallPath&gt;c:\installfiles&lt;/InstallPath&gt;
               &lt;InstallCommand&gt;install2.bat&lt;/InstallCommand&gt;
