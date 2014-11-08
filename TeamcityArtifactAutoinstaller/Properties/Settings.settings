@@ -1,0 +1,31 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TeamcityArtifactAutoinstaller.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="NotificationEmails" Type="System.Collections.Specialized.StringCollection" Scope="Application">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;string&gt;email1@company.com&lt;/string&gt;
+  &lt;string&gt;email2@company.com&lt;/string&gt;
+&lt;/ArrayOfString&gt;</Value>
+    </Setting>
+    <Setting Name="TeamcityProjects" Type="System.Collections.Generic.List&lt;TeamcityProjectConfiguration&gt;" Scope="Application">
+      <Value Profile="(Default)">
+          &lt;ArrayOfTeamcityProjectConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+            &lt;TeamcityProjectConfiguration&gt;
+              &lt;TeamCityBaseUrl&gt;https://myteamcirtyserver.com&lt;/TeamCityBaseUrl&gt;
+              &lt;TeamCityProjectId&gt;project1&lt;/TeamCityProjectId&gt;
+              &lt;InstallPath&gt;c:\installfiles&lt;/InstallPath&gt;
+              &lt;InstallCommand&gt;install1.bat&lt;/InstallCommand&gt;
+            &lt;/TeamcityProjectConfiguration&gt;
+            &lt;TeamcityProjectConfiguration&gt;
+              &lt;TeamCityBaseUrl&gt;https://myteamcirtyserver.com&lt;/TeamCityBaseUrl&gt;
+              &lt;TeamCityProjectId&gt;project2&lt;/TeamCityProjectId&gt;
+              &lt;InstallPath&gt;c:\installfiles&lt;/InstallPath&gt;
+              &lt;InstallCommand&gt;install2.bat&lt;/InstallCommand&gt;
+            &lt;/TeamcityProjectConfiguration&gt;
+          &lt;/ArrayOfTeamcityProjectConfiguration&gt;
+        </Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
