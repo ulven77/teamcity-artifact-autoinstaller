@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,6 +51,33 @@ namespace TeamcityArtifactAutoinstaller
 
                 ZipFile.ExtractToDirectory(zipPath, unzipDirPath);
                 File.Delete(zipPath);
+
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.WorkingDirectory = project.InstallPath;
+                startInfo.FileName = Path.Combine(project.InstallPath, project.InstallCommand);
+                startInfo.Arguments = unzipDir;
+                startInfo.RedirectStandardOutput = true;
+                startInfo.UseShellExecute = false;
+
+                var process = Process.Start(startInfo);
+
+                process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
+
+                var stdOutResponse = process.StandardOutput.ReadToEnd();
+
+                MailMessage m = new MailMessage();
+                foreach (var recipient in Properties.Settings.Default.NotificationEmails)
+                {
+                    m.To.Add(new MailAddress(recipient));
+                }
+                m.Subject = string.Format("{0} version {1} automatically deployed", project.TeamCityProjectId, versionString);
+                using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
+                {
+                    m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
+
+                    SmtpClient smtp = new SmtpClient();
+                    smtp.Send(m);
+                }
 
                 // Store current version
                 lastCheckedVersion[project.TeamCityProjectId] = versionString;
