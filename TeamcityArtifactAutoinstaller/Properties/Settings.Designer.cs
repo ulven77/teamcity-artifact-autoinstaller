@@ -62,5 +62,14 @@ namespace TeamcityArtifactAutoinstaller.Properties {
                 return ((global::System.Collections.Generic.List<TeamcityProjectConfiguration>)(this["TeamcityProjects"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("This mail was sent from TeamcityArtifactInstaller")]
+        public string MailBody {
+            get {
+                return ((string)(this["MailBody"]));
+            }
+        }
     }
 }

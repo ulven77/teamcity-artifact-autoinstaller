@@ -31,5 +31,8 @@
           &lt;/ArrayOfTeamcityProjectConfiguration&gt;
         </Value>
     </Setting>
+    <Setting Name="MailBody" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">This mail was sent from TeamcityArtifactInstaller</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

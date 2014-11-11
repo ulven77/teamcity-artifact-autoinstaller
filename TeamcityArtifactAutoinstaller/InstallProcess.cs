@@ -71,6 +71,7 @@ namespace TeamcityArtifactAutoinstaller
                     m.To.Add(new MailAddress(recipient));
                 }
                 m.Subject = string.Format("{0} version {1} automatically deployed", project.TeamCityProjectId, versionString);
+                m.Body = Properties.Settings.Default.MailBody;
                 using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
                 {
                     m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
