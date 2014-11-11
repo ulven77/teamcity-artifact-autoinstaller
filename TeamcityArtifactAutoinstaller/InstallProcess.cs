@@ -70,7 +70,14 @@ namespace TeamcityArtifactAutoinstaller
                 {
                     m.To.Add(new MailAddress(recipient));
                 }
-                m.Subject = string.Format("{0} version {1} automatically deployed", project.TeamCityProjectId, versionString);
+                if (process.ExitCode == 0)
+                {
+                    m.Subject = string.Format("{0} version {1} automatically deployed", project.TeamCityProjectId, versionString);
+                }
+                else
+                {
+                    m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
+                }
                 m.Body = Properties.Settings.Default.MailBody;
                 using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
                 {
