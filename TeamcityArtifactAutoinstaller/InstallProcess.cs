@@ -92,7 +92,7 @@ namespace TeamcityArtifactAutoinstaller
                 }
                 if (process.ExitCode == 0)
                 {
-                    m.Subject = string.Format("{0} version {1} automatically deployed", project.TeamCityProjectId, versionString);
+                    m.Subject = string.Format("{0} version {1} was automatically deployed", project.TeamCityProjectId, versionString);
                 }
                 else
                 {
