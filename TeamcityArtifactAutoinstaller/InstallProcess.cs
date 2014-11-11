@@ -26,7 +26,8 @@ namespace TeamcityArtifactAutoinstaller
             {
                 log.DebugFormat("Start project {0}", project.TeamCityProjectId);
 
-                WebClient wc = new WebClient();
+                using (WebClient wc = new WebClient())
+                {
                 wc.Credentials = new NetworkCredential(project.TeamCityUserName, project.TeamCityPassword);
                 var versionUrl = string.Format("{0}/httpAuth/app/rest/buildTypes/id:{1}/builds/status:SUCCESS/number", project.TeamCityBaseUrl, project.TeamCityProjectId);
                 var versionString = wc.DownloadString(versionUrl);
@@ -46,7 +47,7 @@ namespace TeamcityArtifactAutoinstaller
                 {
                     // Startup, just remember current version but don't install
                     lastCheckedVersion[project.TeamCityProjectId] = versionString;
-                    log.DebugFormat("Startup setting baseline version {0}", versionString);
+                    log.InfoFormat("Startup setting baseline version {0} for project {1}", versionString, project.TeamCityProjectId);
                     continue;
                 }
 
@@ -60,12 +61,12 @@ namespace TeamcityArtifactAutoinstaller
                 var unzipDirPath = Path.Combine(project.InstallPath, unzipDir);
                 wc.DownloadFile(artifactUrl, zipPath);
 
-                log.DebugFormat("File {0} downloaded", artifactUrl);
+                log.InfoFormat("File {0} downloaded", artifactUrl);
 
                 ZipFile.ExtractToDirectory(zipPath, unzipDirPath);
                 File.Delete(zipPath);
 
-                log.DebugFormat("File unzipped to {0}", unzipDirPath);
+                log.InfoFormat("File unzipped to {0}", unzipDirPath);
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.WorkingDirectory = project.InstallPath;
@@ -74,30 +75,51 @@ namespace TeamcityArtifactAutoinstaller
                 startInfo.RedirectStandardOutput = true;
                 startInfo.UseShellExecute = false;
 
-                log.DebugFormat("Starting {0} with arguments {1}", startInfo.FileName, startInfo.Arguments);
+                log.InfoFormat("Starting {0} with arguments {1}", startInfo.FileName, startInfo.Arguments);
 
                 var process = Process.Start(startInfo);
 
                 process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
 
-                log.Debug("Process execution done");
+                log.Info("Process execution done");
 
                 var stdOutResponse = process.StandardOutput.ReadToEnd();
 
-                log.Debug("Start sending mails");
+                log.Info("Start sending mails");
                 MailMessage m = new MailMessage();
                 foreach (var recipient in Properties.Settings.Default.NotificationEmails)
                 {
                     m.To.Add(new MailAddress(recipient));
                 }
-                if (process.ExitCode == 0)
+                var hasFailed = false;
+                if (process.ExitCode != 0)
+                {
+                    m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
+                    log.Info(m.Subject);
+                    hasFailed = true;
+                }
+
+                if (!hasFailed)
+                {
+                    if (!string.IsNullOrEmpty(project.VerifyUrl))
+                    {
+                        wc.Credentials = null;
+                        var verifyPage = wc.DownloadString(project.VerifyUrl);
+
+                        if (!verifyPage.Contains(versionString))
+                        {
+                            m.Subject = string.Format("FAILED DEPLOY {0} version {1} could not verify {2}", project.TeamCityProjectId, versionString, project.VerifyUrl);
+                            log.Info(m.Subject);
+                            log.InfoFormat("Verify page content\n{0}", verifyPage);
+                            hasFailed = true;
+                        }
+                    }
+                }
+                if (!hasFailed)
                 {
                     m.Subject = string.Format("{0} version {1} was automatically deployed", project.TeamCityProjectId, versionString);
                 }
-                else
-                {
-                    m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
-                }
+
                 m.Body = Properties.Settings.Default.MailBody;
                 using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
                 {
@@ -107,9 +129,10 @@ namespace TeamcityArtifactAutoinstaller
                     smtp.Send(m);
                 }
 
-                log.Debug("Mail sending done");
+                log.Info("Mail sending done");
                 // Store current version
                 lastCheckedVersion[project.TeamCityProjectId] = versionString;
+            }
             }
 
             log.Debug("CheckAndInstall END");

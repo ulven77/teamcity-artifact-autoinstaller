@@ -19,5 +19,7 @@ namespace TeamcityArtifactAutoinstaller
         public string InstallPath { get; set; }
 
         public string InstallCommand { get; set; }
+
+        public string VerifyUrl { get; set; }
     }
 }
