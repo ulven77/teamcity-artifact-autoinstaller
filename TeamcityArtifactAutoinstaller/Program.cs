@@ -18,11 +18,20 @@ namespace TeamcityArtifactAutoinstaller
             {
                 // Console mode
 
-                // Run once
-                InstallProcess.CheckAndInstall();
+                while (true)
+                {
+                    // Run once
+                    Console.WriteLine("Check and install BEGIN");
+                    InstallProcess.CheckAndInstall();
+                    Console.WriteLine("Check and install END");
 
-                Console.WriteLine("Done, press any key to quit.");
-                Console.ReadKey();
+                    Console.WriteLine("Done, 'q' to quit, any other key to check again.");
+                    var key = Console.ReadKey();
+                    if (key.Key == ConsoleKey.Q)
+                    {
+                        break;
+                    }
+                }
             }
             else
             {
