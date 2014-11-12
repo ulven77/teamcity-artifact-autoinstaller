@@ -28,9 +28,12 @@ namespace TeamcityArtifactAutoinstaller
 
                 using (WebClient wc = new WebClient())
                 {
+                    var sw = Stopwatch.StartNew();
+                    var timeStats = new StringBuilder();
                     wc.Credentials = new NetworkCredential(project.TeamCityUserName, project.TeamCityPassword);
                     var versionUrl = string.Format("{0}/httpAuth/app/rest/buildTypes/id:{1}/builds/status:SUCCESS/number", project.TeamCityBaseUrl, project.TeamCityProjectId);
                     var versionString = wc.DownloadString(versionUrl);
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " got versionString");
 
                     log.DebugFormat("versionString = {0}", versionString);
 
@@ -60,11 +63,14 @@ namespace TeamcityArtifactAutoinstaller
                     var zipPath = Path.Combine(project.InstallPath, zipFileName);
                     var unzipDirPath = Path.Combine(project.InstallPath, unzipDir);
                     wc.DownloadFile(artifactUrl, zipPath);
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " file downloaded");
+
 
                     log.InfoFormat("File {0} downloaded", artifactUrl);
 
                     ZipFile.ExtractToDirectory(zipPath, unzipDirPath);
                     File.Delete(zipPath);
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " file extracted");
 
                     log.InfoFormat("File unzipped to {0}", unzipDirPath);
 
@@ -80,10 +86,12 @@ namespace TeamcityArtifactAutoinstaller
                     var process = Process.Start(startInfo);
 
                     process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " install script executed");
 
                     log.Info("Process execution done");
 
                     var stdOutResponse = process.StandardOutput.ReadToEnd();
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " parsed install script output");
 
                     log.Info("Start sending mails");
                     MailMessage m = new MailMessage();
@@ -113,6 +121,7 @@ namespace TeamcityArtifactAutoinstaller
                                 log.InfoFormat("Verify page content\n{0}", verifyPage);
                                 hasFailed = true;
                             }
+                            timeStats.AppendLine(sw.Elapsed.ToString() + " verify complete");
                         }
                     }
                     if (!hasFailed)
@@ -120,7 +129,8 @@ namespace TeamcityArtifactAutoinstaller
                         m.Subject = string.Format("{0} version {1} was automatically deployed", project.TeamCityProjectId, versionString);
                     }
 
-                    m.Body = Properties.Settings.Default.MailBody;
+                    m.Body = Properties.Settings.Default.MailBody
+                        + Environment.NewLine + Environment.NewLine + "Time stats:" + Environment.NewLine + timeStats.ToString();
                     using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
                     {
                         m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
@@ -130,6 +140,8 @@ namespace TeamcityArtifactAutoinstaller
                     }
 
                     log.Info("Mail sending done");
+                    timeStats.AppendLine(sw.Elapsed.ToString() + " sent all mails");
+                    log.Info("Time stats:" + Environment.NewLine + timeStats.ToString());
                     // Store current version
                     lastCheckedVersion[project.TeamCityProjectId] = versionString;
                 }
