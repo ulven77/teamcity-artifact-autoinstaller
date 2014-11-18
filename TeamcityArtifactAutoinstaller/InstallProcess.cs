@@ -100,9 +100,12 @@ namespace TeamcityArtifactAutoinstaller
 
                         timeStats.AppendLine(sw.Elapsed.ToString() + " parsed install script output");
 
-                        process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
-                        process.WaitForExit(); // Force reading all output since that may not be read completely with the above overload
-                        //                        Recommended by http://msdn.microsoft.com/en-us/library/ty0d8k56(v=vs.110).aspx
+                        var processTerminatedSuccessfully = process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
+                        if (processTerminatedSuccessfully)
+                        {
+                            process.WaitForExit(); // Force reading all output since that may not be read completely with the above overload
+                            //                        Recommended by http://msdn.microsoft.com/en-us/library/ty0d8k56(v=vs.110).aspx
+                        }
                         timeStats.AppendLine(sw.Elapsed.ToString() + " install script executed");
 
                         log.Info("Process execution done");
@@ -114,7 +117,13 @@ namespace TeamcityArtifactAutoinstaller
                             m.To.Add(new MailAddress(recipient));
                         }
                         var hasFailed = false;
-                        if (process.ExitCode != 0)
+                        if (!processTerminatedSuccessfully)
+                        {
+                            m.Subject = string.Format("FAILED DEPLOY {0} version {1} timed out and was terminated", project.TeamCityProjectId, versionString);
+                            log.Info(m.Subject);
+                            hasFailed = true;
+                        }
+                        if (!hasFailed && process.ExitCode != 0)
                         {
                             m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
                             log.Info(m.Subject);
