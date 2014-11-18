@@ -83,67 +83,83 @@ namespace TeamcityArtifactAutoinstaller
 
                     log.InfoFormat("Starting {0} with arguments {1}", startInfo.FileName, startInfo.Arguments);
 
-                    var process = Process.Start(startInfo);
-
-                    process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
-                    timeStats.AppendLine(sw.Elapsed.ToString() + " install script executed");
-
-                    log.Info("Process execution done");
-
-                    var stdOutResponse = process.StandardOutput.ReadToEnd();
-                    timeStats.AppendLine(sw.Elapsed.ToString() + " parsed install script output");
-
-                    log.Info("Start sending mails");
-                    MailMessage m = new MailMessage();
-                    foreach (var recipient in Properties.Settings.Default.NotificationEmails)
+                    using (var process = new Process())
                     {
-                        m.To.Add(new MailAddress(recipient));
-                    }
-                    var hasFailed = false;
-                    if (process.ExitCode != 0)
-                    {
-                        m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
-                        log.Info(m.Subject);
-                        hasFailed = true;
-                    }
-
-                    if (!hasFailed)
-                    {
-                        if (!string.IsNullOrEmpty(project.VerifyUrl))
+                        process.StartInfo = startInfo;
+                        var stdOutResponse = new StringBuilder();
+                        process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
                         {
-                            wc.Credentials = null;
-                            var verifyPage = wc.DownloadString(project.VerifyUrl);
-
-                            if (!verifyPage.Contains(versionString))
+                            if (e.Data != null)
                             {
-                                m.Subject = string.Format("FAILED DEPLOY {0} version {1} could not verify {2}", project.TeamCityProjectId, versionString, project.VerifyUrl);
-                                log.Info(m.Subject);
-                                log.InfoFormat("Verify page content\n{0}", verifyPage);
-                                hasFailed = true;
+                                stdOutResponse.AppendLine(e.Data);
                             }
-                            timeStats.AppendLine(sw.Elapsed.ToString() + " verify complete");
+                        };
+
+                        process.Start();
+                        process.BeginOutputReadLine();
+
+                        timeStats.AppendLine(sw.Elapsed.ToString() + " parsed install script output");
+
+                        process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
+                        process.WaitForExit(); // Force reading all output since that may not be read completely with the above overload
+                        //                        Recommended by http://msdn.microsoft.com/en-us/library/ty0d8k56(v=vs.110).aspx
+                        timeStats.AppendLine(sw.Elapsed.ToString() + " install script executed");
+
+                        log.Info("Process execution done");
+
+                        log.Info("Start sending mails");
+                        MailMessage m = new MailMessage();
+                        foreach (var recipient in Properties.Settings.Default.NotificationEmails)
+                        {
+                            m.To.Add(new MailAddress(recipient));
                         }
-                    }
-                    if (!hasFailed)
-                    {
-                        m.Subject = string.Format("{0} version {1} was automatically deployed", project.TeamCityProjectId, versionString);
-                    }
+                        var hasFailed = false;
+                        if (process.ExitCode != 0)
+                        {
+                            m.Subject = string.Format("FAILED DEPLOY {0} version {1} failed with ExitCode = {2}", project.TeamCityProjectId, versionString, process.ExitCode);
+                            log.Info(m.Subject);
+                            hasFailed = true;
+                        }
 
-                    m.Body = Properties.Settings.Default.MailBody
-                        + Environment.NewLine + Environment.NewLine + "Time stats:" + Environment.NewLine + timeStats.ToString();
-                    using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse)))
-                    {
-                        m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
+                        if (!hasFailed)
+                        {
+                            if (!string.IsNullOrEmpty(project.VerifyUrl))
+                            {
+                                wc.Credentials = null;
+                                var verifyPage = wc.DownloadString(project.VerifyUrl);
 
-                        SmtpClient smtp = new SmtpClient();
-                        smtp.Send(m);
+                                if (!verifyPage.Contains(versionString))
+                                {
+                                    m.Subject = string.Format("FAILED DEPLOY {0} version {1} could not verify {2}", project.TeamCityProjectId, versionString, project.VerifyUrl);
+                                    log.Info(m.Subject);
+                                    log.InfoFormat("Verify page content\n{0}", verifyPage);
+                                    hasFailed = true;
+                                }
+                                timeStats.AppendLine(sw.Elapsed.ToString() + " verify complete");
+                            }
+                        }
+                        if (!hasFailed)
+                        {
+                            m.Subject = string.Format("{0} version {1} was automatically deployed", project.TeamCityProjectId, versionString);
+                        }
+
+                        m.Body = Properties.Settings.Default.MailBody
+                            + Environment.NewLine + Environment.NewLine + "Time stats:" + Environment.NewLine + timeStats.ToString();
+                        using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse.ToString())))
+                        {
+                            m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
+
+                            SmtpClient smtp = new SmtpClient();
+                            smtp.Send(m);
+                        }
+
+                        log.Info("Mail sending done");
+                        timeStats.AppendLine(sw.Elapsed.ToString() + " sent all mails");
+                        log.Info("Time stats:" + Environment.NewLine + timeStats.ToString());
+
+                        // Store current version
+                        lastCheckedVersion[project.TeamCityProjectId] = versionString;
                     }
-
-                    log.Info("Mail sending done");
-                    timeStats.AppendLine(sw.Elapsed.ToString() + " sent all mails");
-                    log.Info("Time stats:" + Environment.NewLine + timeStats.ToString());
-                    // Store current version
-                    lastCheckedVersion[project.TeamCityProjectId] = versionString;
                 }
             }
 
