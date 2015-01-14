@@ -173,6 +173,12 @@ namespace TeamcityArtifactAutoinstaller
                         }
                     }
                 }
+                catch (WebException e)
+                {
+                    log.Error("Installation failed with WebException", e);
+                    Console.WriteLine("Installation failed with WebException");
+                    // deliberately don't send any mail
+                }
                 catch (Exception e)
                 {
                     log.Error("Installation failed with unknown exception", e);
