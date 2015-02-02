@@ -22,7 +22,7 @@ namespace TeamcityArtifactAutoinstaller
                 {
                     // Run once
                     Console.WriteLine("Check and install BEGIN");
-                    InstallProcess.CheckAndInstall();
+                    InstallProcess.CheckAndInstall(true);
                     Console.WriteLine("Check and install END");
 
                     Console.WriteLine("Done, 'q' to quit, any other key to check again.");

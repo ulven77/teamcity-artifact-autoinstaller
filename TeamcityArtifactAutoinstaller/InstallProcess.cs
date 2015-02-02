@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace TeamcityArtifactAutoinstaller
 {
@@ -17,7 +18,7 @@ namespace TeamcityArtifactAutoinstaller
         private static Dictionary<string, string> lastCheckedVersion = new Dictionary<string, string>();
         private static readonly ILog log = LogManager.GetLogger(typeof(InstallProcess));
 
-        public static void CheckAndInstall()
+        public static void CheckAndInstall(bool interactive)
         {
             Console.WriteLine("Check and install");
             log.Debug("CheckAndInstall BEGIN");
@@ -45,7 +46,19 @@ namespace TeamcityArtifactAutoinstaller
                             {
                                 // Nothing has changed
                                 log.DebugFormat("Nothing has changed");
-                                continue;
+                                Console.WriteLine("Nothing has changed");
+                                if (interactive)
+                                {
+                                    Console.WriteLine("Press y to install anyway, any other key to skip install");
+                                    if (Console.ReadKey().Key != ConsoleKey.Y)
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else
+                                {
+                                    continue;
+                                }
                             }
                         }
                         else
@@ -53,7 +66,19 @@ namespace TeamcityArtifactAutoinstaller
                             // Startup, just remember current version but don't install
                             lastCheckedVersion[project.TeamCityProjectId] = versionString;
                             log.InfoFormat("Startup setting baseline version {0} for project {1}", versionString, project.TeamCityProjectId);
-                            continue;
+                            Console.WriteLine(string.Format("Startup setting baseline version {0} for project {1}", versionString, project.TeamCityProjectId));
+                            if (interactive)
+                            {
+                                Console.WriteLine("Press y to install anyway, any other key to skip install");
+                                if (Console.ReadKey().Key != ConsoleKey.Y)
+                                {
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                continue;
+                            }
                         }
 
                         // We found a new version for this project

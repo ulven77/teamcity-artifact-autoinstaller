@@ -37,7 +37,7 @@ namespace TeamcityArtifactAutoinstaller
         {
             try
             {
-                InstallProcess.CheckAndInstall();
+                InstallProcess.CheckAndInstall(false);
             }
             catch (Exception ex)
             {
