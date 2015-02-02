@@ -157,6 +157,7 @@ namespace TeamcityArtifactAutoinstaller
                                 hasFailed = true;
                             }
 
+                            string errorVerifyPage = "";
                             if (!hasFailed)
                             {
                                 if (!string.IsNullOrEmpty(project.VerifyUrl))
@@ -164,12 +165,18 @@ namespace TeamcityArtifactAutoinstaller
                                     wc.Credentials = null;
                                     var verifyPage = wc.DownloadString(project.VerifyUrl);
 
-                                    if (!verifyPage.Contains(versionString))
+                                    var shortVersionString = versionString;
+                                    if (shortVersionString.Length > 9)
+                                    {
+                                        shortVersionString = shortVersionString.Substring(0, 9);
+                                    }
+                                    if (!verifyPage.Contains(shortVersionString))
                                     {
                                         m.Subject = string.Format("FAILED DEPLOY {0} version {1} could not verify {2}", project.TeamCityProjectId, versionString, project.VerifyUrl);
                                         log.Info(m.Subject);
                                         log.InfoFormat("Verify page content\n{0}", verifyPage);
                                         hasFailed = true;
+                                        errorVerifyPage = verifyPage;
                                     }
                                     timeStats.AppendLine(sw.Elapsed.ToString() + " verify complete");
                                 }
@@ -183,10 +190,17 @@ namespace TeamcityArtifactAutoinstaller
                                 + Environment.NewLine + Environment.NewLine + "Time stats:" + Environment.NewLine + timeStats.ToString();
                             using (var attachementStream = new MemoryStream(Encoding.UTF8.GetBytes(stdOutResponse.ToString())))
                             {
-                                m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
+                                using (var errorAttachementStream = new MemoryStream(Encoding.UTF8.GetBytes(errorVerifyPage)))
+                                {
+                                    m.Attachments.Add(new Attachment(attachementStream, "install-log.txt"));
+                                    if (!string.IsNullOrEmpty(errorVerifyPage))
+                                    {
+                                        m.Attachments.Add(new Attachment(errorAttachementStream, "verify-fail-page-content.txt"));
+                                    }
 
-                                SmtpClient smtp = new SmtpClient();
-                                smtp.Send(m);
+                                    SmtpClient smtp = new SmtpClient();
+                                    smtp.Send(m);
+                                }
                             }
 
                             log.Info("Mail sending done");
