@@ -25,6 +25,7 @@ namespace TeamcityArtifactAutoinstaller
 
             foreach (var project in Properties.Settings.Default.TeamcityProjects)
             {
+                string versionString = null;
                 try
                 {
                     log.DebugFormat("Start project {0}", project.TeamCityProjectId);
@@ -35,7 +36,7 @@ namespace TeamcityArtifactAutoinstaller
                         var timeStats = new StringBuilder();
                         wc.Credentials = new NetworkCredential(project.TeamCityUserName, project.TeamCityPassword);
                         var versionUrl = string.Format("{0}/httpAuth/app/rest/buildTypes/id:{1}/builds/status:SUCCESS/number", project.TeamCityBaseUrl, project.TeamCityProjectId);
-                        var versionString = wc.DownloadString(versionUrl);
+                        versionString = wc.DownloadString(versionUrl);
                         timeStats.AppendLine(sw.Elapsed.ToString() + " got versionString");
 
                         log.DebugFormat("versionString = {0}", versionString);
@@ -220,6 +221,12 @@ namespace TeamcityArtifactAutoinstaller
                 }
                 catch (Exception e)
                 {
+                    // Store current version to avoid endless failure loops
+                    if (!string.IsNullOrEmpty(versionString))
+                    {
+                        lastCheckedVersion[project.TeamCityProjectId] = versionString;
+                    }
+                    
                     log.Error("Installation failed with unknown exception", e);
                     Console.WriteLine("Installation failed with unknown exception");
                     Console.WriteLine(e.ToString());
@@ -231,7 +238,7 @@ namespace TeamcityArtifactAutoinstaller
                             m.To.Add(new MailAddress(recipient));
                         }
 
-                        m.Subject = string.Format("FAILED DEPLOY {0} with unknown exception", project.TeamCityProjectId);
+                        m.Subject = string.Format("FAILED DEPLOY {0} version {1} with unknown exception", project.TeamCityProjectId, versionString);
 
                         m.Body = e.ToString();
                         SmtpClient smtp = new SmtpClient();
