@@ -37,7 +37,6 @@ namespace TeamcityArtifactAutoinstaller
                         timeStats.AppendLine(sw.Elapsed.ToString() + " got versionString");
 
                         log.DebugFormat("versionString = {0}", versionString);
-
                         if (lastCheckedVersion.ContainsKey(project.TeamCityProjectId))
                         {
                             if (lastCheckedVersion[project.TeamCityProjectId] == versionString)
@@ -108,7 +107,7 @@ namespace TeamcityArtifactAutoinstaller
                         // Use install.bat contained in zip archive as a starting point for the installation.
                         if (project.ArchiveContainsInstallCommand)
                         {
-                            startInfo.WorkingDirectory = unzipDirPath;
+                            startInfo.WorkingDirectory = unzipDirPath + @"\installfiles";
                         }
                         else
                         {
@@ -139,7 +138,7 @@ namespace TeamcityArtifactAutoinstaller
 
                             timeStats.AppendLine(sw.Elapsed.ToString() + " parsed install script output");
 
-                            var processTerminatedSuccessfully = process.WaitForExit(5 * 60 * 1000); // wait 5 minutes
+                            var processTerminatedSuccessfully = process.WaitForExit(15 * 60 * 1000); // wait 15 minutes
                             if (processTerminatedSuccessfully)
                             {
                                 process.WaitForExit(); // Force reading all output since that may not be read completely with the above overload
